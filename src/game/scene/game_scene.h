@@ -1,22 +1,25 @@
 #pragma once
-
 #include "../../engine/scene/scene.h"
-
 
 namespace game::scene {
 
-class GameScene : public engine::scene::Scene {
+class GameScene final: public engine::scene::Scene {
 public:
-
-    GameScene(std::string_view name, engine::core::Context& context, engine::scene::SceneManager& scene_manager);
+    GameScene(engine::core::Context& context);
     ~GameScene();
 
     void init() override;
     void clean() override;
 
 private:
-    void onAttack();
-    void onJump();
+    // --- 测试资源管理器 ---
+    void testResourceManager();
+
+    int scene_num_{0}; // 场景编号，测试用
+    bool onReplace();
+    bool onPop();
+    bool onPush();
+    bool onQuit();
 };
 
 

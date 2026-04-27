@@ -35,7 +35,6 @@ void GameApp::run() {
     while (is_running_) {
         time_->update();
         float delta_time = time_->getDeltaTime();
-        input_manager_->update();   // 每帧首先更新输入管理器
         
         handleEvents();
         update(delta_time);
@@ -47,7 +46,7 @@ void GameApp::run() {
     close();
 }
 
-void GameApp::registerSceneSetup(std::function<void(engine::scene::SceneManager &)> func)
+void GameApp::registerSceneSetup(std::function<void(engine::core::Context &)> func)
 {
     scene_setup_func_ = std::move(func);
     spdlog::trace("已注册场景设置函数。");
@@ -76,7 +75,7 @@ bool GameApp::init() {
     if (!initSceneManager()) return false;
 
     // 调用场景设置函数 (创建第一个场景并压入栈)
-    scene_setup_func_(*scene_manager_);
+    scene_setup_func_(*context_);
 
     //注册退出事件处理函数
     dispatcher_->sink<engine::utils::QuitEvent>().connect<&GameApp::onQuitEvent>(this);
@@ -87,12 +86,7 @@ bool GameApp::init() {
 }
 
 void GameApp::handleEvents() {
-    if (input_manager_->shouldQuit()) {
-        spdlog::trace("GameApp 收到来自 InputManager 的退出请求。");
-        is_running_ = false;
-        return;
-    }
-
+    input_manager_->update(); // 先更新输入状态，以便在场景的 handleInput 中使用最新的输入状态
     scene_manager_->handleInput();
 }
 
@@ -215,6 +209,7 @@ bool GameApp::initAudioPlayer()
         return false;
     }
     spdlog::trace("音频播放器初始化成功。");
+    resource_manager_->loadResources("assets/data/resource_mapping.json");  // 载入默认资源映射文件
     return true;
 }
 
@@ -255,7 +250,7 @@ bool GameApp::initTextRenderer()
 bool GameApp::initInputManager()
 {
     try {
-        input_manager_ = std::make_unique<engine::input::InputManager>(sdl_renderer_, config_.get());
+        input_manager_ = std::make_unique<engine::input::InputManager>(sdl_renderer_, config_.get(), dispatcher_.get());
     } catch (const std::exception& e) {
         spdlog::error("初始化输入管理器失败: {}", e.what());
         return false;

@@ -1,13 +1,19 @@
 #include "scene_manager.h"
 #include "scene.h"
 #include "../core/context.h"
+#include "../utils/events.h"
 #include <spdlog/spdlog.h>
+#include <entt/signal/dispatcher.hpp>
 
 namespace engine::scene {
 
 SceneManager::SceneManager(engine::core::Context& context)
     : context_(context) {
     spdlog::trace("场景管理器已创建。");
+
+    context_.getDispatcher().sink<engine::utils::PopSceneEvent>().connect<&SceneManager::onPopScene>(this);
+    context_.getDispatcher().sink<engine::utils::PushSceneEvent>().connect<&SceneManager::onPushScene>(this);
+    context_.getDispatcher().sink<engine::utils::ReplaceSceneEvent>().connect<&SceneManager::onReplaceScene>(this);
 }
 
 SceneManager::~SceneManager() {
@@ -59,21 +65,24 @@ void SceneManager::close() {
         }
         scene_stack_.pop_back();
     }   
+    context_.getDispatcher().disconnect(this); // 断开所有与 this 相关的事件连接
 }
 
 void SceneManager::onPopScene()
 {
-
+    pending_action_ = PendingAction::Pop;
 }
 
 void SceneManager::onPushScene(engine::utils::PushSceneEvent &event)
 {
-
+    pending_action_ = PendingAction::Push;
+    pending_scene_ = std::move(event.scene);
 }
 
 void SceneManager::onReplaceScene(engine::utils::ReplaceSceneEvent &event)
 {
-    
+    pending_action_ = PendingAction::Replace;
+    pending_scene_ = std::move(event.scene);
 }
 
 // --- Private Methods ---
@@ -129,6 +138,10 @@ void SceneManager::popScene() {
         scene_stack_.back()->clean();       // 显式调用清理
     }
     scene_stack_.pop_back();
+    if (scene_stack_.empty()) {
+        spdlog::info("场景栈已空。");
+        context_.getDispatcher().enqueue<engine::utils::QuitEvent>(); // 场景栈空了，触发退出事件
+    }
 }
 
 void SceneManager::replaceScene(std::unique_ptr<Scene>&& scene) {

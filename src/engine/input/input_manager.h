@@ -7,6 +7,7 @@
 #include <SDL3/SDL_render.h>
 #include <glm/vec2.hpp>
 #include <entt/signal/sigh.hpp>
+#include <entt/signal/fwd.hpp>
 #include <array>
 
 namespace engine::core {
@@ -31,10 +32,11 @@ enum class ActionState {
 class InputManager final {
 private:
     SDL_Renderer* sdl_renderer_;                                            ///< @brief 用于获取逻辑坐标的 SDL_Renderer 指针
+    entt::dispatcher *dispatcher_;                                                  ///< @brief 事件分发器，用于发布输入相关事件 
 
 
     //核心数据结构：存贮动作名称函数列表的映射
-    std::unordered_map<std::string,  std::array<entt::sigh<void()>, 3>> actions_to_function_; ///< @brief 存储动作名称到函数列表的映射
+    std::unordered_map<std::string,  std::array<entt::sigh<bool()>, 3>> actions_to_function_; ///< @brief 存储动作名称到函数列表的映射
 
     std::unordered_map<std::string, std::vector<std::string>> actions_to_keyname_; ///< @brief 从动作名称到按键名称列表的映射
 
@@ -43,31 +45,31 @@ private:
 
     std::unordered_map<std::string, ActionState> action_states_;    ///< @brief 存储每个动作的当前状态
 
-    bool should_quit_ = false;                                      ///< @brief 退出标志
     glm::vec2 mouse_position_;                                      ///< @brief 鼠标位置 (针对屏幕坐标)
+    glm::vec2 logical_mouse_position_;                              ///< @brief 鼠标位置 (针对逻辑坐标) 
 
 public:
     /**
      * @brief 构造函数
      * @param sdl_renderer 指向 SDL_Renderer 的指针
      * @param config 配置对象
+     * @param dispatcher 事件分发器对象
      * @throws std::runtime_error 如果任一指针为 nullptr。
      */
-    InputManager(SDL_Renderer* sdl_renderer, const engine::core::Config* config);
+    InputManager(SDL_Renderer* sdl_renderer, const engine::core::Config* config, entt::dispatcher* dispatcher);
 
     //注册一个动作的回调函数
-    entt::sink<entt::sigh<void()>> onAction(std::string_view action_name, ActionState state = ActionState::PRESSED); ///< @brief 注册一个动作的回调函数
+    entt::sink<entt::sigh<bool()>> onAction(std::string_view action_name, ActionState state = ActionState::PRESSED); ///< @brief 注册一个动作的回调函数
 
     void update();                                    ///< @brief 更新输入状态，每轮循环最先调用
+
+    void quit();                                    ///< @brief 退出输入管理器
 
 
     // 动作状态检查
     bool isActionDown(std::string_view action_name) const;        ///< @brief 动作当前是否触发 (持续按下或本帧按下)
     bool isActionPressed(std::string_view action_name) const;     ///< @brief 动作是否在本帧刚刚按下
     bool isActionReleased(std::string_view action_name) const;    ///< @brief 动作是否在本帧刚刚释放
-
-    bool shouldQuit() const;                                         ///< @brief 查询退出状态
-    void setShouldQuit(bool should_quit);                            ///< @brief 设置退出状态
 
     glm::vec2 getMousePosition() const;                              ///< @brief 获取鼠标位置 （屏幕坐标）
     glm::vec2 getLogicalMousePosition() const;                       ///< @brief 获取鼠标位置 （逻辑坐标）

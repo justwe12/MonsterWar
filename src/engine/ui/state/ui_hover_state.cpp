@@ -5,12 +5,15 @@
 #include "../../input/input_manager.h"
 #include "../../core/context.h"
 #include <spdlog/spdlog.h>
+#include <entt/core/hashed_string.hpp>
+
+using namespace entt::literals;
 
 namespace engine::ui::state {
 
 void UIHoverState::enter()
 {
-    owner_->setSprite("hover");
+    owner_->setSprite("hover"_hs);
     spdlog::debug("切换到悬停状态");
 }
 
@@ -21,7 +24,7 @@ std::unique_ptr<UIState> UIHoverState::handleInput(engine::core::Context& contex
     if (!owner_->isPointInside(mouse_pos)) {                // 如果鼠标不在UI元素内，则返回正常状态
         return std::make_unique<UINormalState>(owner_);
     }
-    if (input_manager.isActionPressed("mouse_left")) {  // 如果鼠标按下，则返回按下状态
+    if (input_manager.isActionPressed("MouseLeftClick")) {  // 如果鼠标按下，则返回按下状态
         return std::make_unique<UIPressedState>(owner_);
     }
     return nullptr;

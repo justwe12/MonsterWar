@@ -3,6 +3,8 @@
 #include "../component/transform_component.h"
 #include "../component/tilelayer_component.h"
 #include "../component/sprite_component.h"
+#include "../component/collider_component.h"
+#include "../component/physics_component.h"
 #include "../component/animation_component.h"
 #include "../component/health_component.h"
 #include "../component/audio_component.h"
