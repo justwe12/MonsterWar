@@ -46,7 +46,7 @@ void GameApp::run() {
     close();
 }
 
-void GameApp::registerSceneSetup(std::function<void(engine::core::Context &)> func)
+void GameApp::registerSceneSetup(std::function<void(engine::core::Context&)> func)
 {
     scene_setup_func_ = std::move(func);
     spdlog::trace("已注册场景设置函数。");
@@ -58,7 +58,6 @@ bool GameApp::init() {
         spdlog::error("未注册场景设置函数，无法初始化 GameApp。");
         return false;
     }
-
     if (!initDispatcher()) return false;
     if (!initConfig()) return false;
     if (!initSDL())  return false;
@@ -77,8 +76,8 @@ bool GameApp::init() {
     // 调用场景设置函数 (创建第一个场景并压入栈)
     scene_setup_func_(*context_);
 
-    //注册退出事件处理函数
-    dispatcher_->sink<engine::utils::QuitEvent>().connect<&GameApp::onQuitEvent>(this);
+    // 注册退出事件 (回调函数可以无参数，代表不使用事件结构体中的数据)
+    dispatcher_->sink<utils::QuitEvent>().connect<&GameApp::onQuitEvent>(this);
 
     is_running_ = true;
     spdlog::trace("GameApp 初始化成功。");
@@ -86,7 +85,9 @@ bool GameApp::init() {
 }
 
 void GameApp::handleEvents() {
-    input_manager_->update(); // 先更新输入状态，以便在场景的 handleInput 中使用最新的输入状态
+    // 处理并分发输入事件
+    input_manager_->update();
+
     scene_manager_->handleInput();
 }
 
@@ -94,7 +95,8 @@ void GameApp::update(float delta_time) {
     // 游戏逻辑更新
     scene_manager_->update(delta_time);
 
-    dispatcher_->update(); // 处理事件分发器中的事件
+    // 分发事件
+    dispatcher_->update();
 }
 
 void GameApp::render() {
@@ -110,8 +112,10 @@ void GameApp::render() {
 
 void GameApp::close() {
     spdlog::trace("关闭 GameApp ...");
-    // 取消注册退出事件处理函数
-    dispatcher_->sink<engine::utils::QuitEvent>().disconnect<&GameApp::onQuitEvent>(this); 
+
+    // 断开事件处理函数
+    dispatcher_->sink<utils::QuitEvent>().disconnect<&GameApp::onQuitEvent>(this);
+
     // 先关闭场景管理器，确保所有场景都被清理
     scene_manager_->close();
 
@@ -128,6 +132,18 @@ void GameApp::close() {
     }
     SDL_Quit();
     is_running_ = false;
+}
+
+bool GameApp::initDispatcher()
+{
+    try {
+        dispatcher_ = std::make_unique<entt::dispatcher>();
+    } catch (const std::exception& e) {
+        spdlog::error("初始化事件分发器失败: {}", e.what());
+        return false;
+    }
+    spdlog::trace("事件分发器初始化成功。");
+    return true;
 }
 
 bool GameApp::initConfig()
@@ -195,6 +211,7 @@ bool GameApp::initResourceManager() {
         return false;
     }
     spdlog::trace("资源管理器初始化成功。");
+    resource_manager_->loadResources("assets/data/resource_mapping.json");  // 载入默认资源映射文件
     return true;
 }
 
@@ -209,7 +226,6 @@ bool GameApp::initAudioPlayer()
         return false;
     }
     spdlog::trace("音频播放器初始化成功。");
-    resource_manager_->loadResources("assets/data/resource_mapping.json");  // 载入默认资源映射文件
     return true;
 }
 
@@ -300,21 +316,9 @@ bool GameApp::initSceneManager()
     return true;
 }
 
-bool GameApp::initDispatcher()
-{
-    try {
-        dispatcher_ = std::make_unique<entt::dispatcher>();
-    } catch (const std::exception& e) {
-        spdlog::error("初始化事件分发器失败: {}", e.what());
-        return false;
-    }
-    spdlog::trace("事件分发器初始化成功。");
-    return true;
-}
-
 void GameApp::onQuitEvent()
 {
-    spdlog::trace("GameApp 收到 QuitEvent 事件，准备退出游戏。");
+    spdlog::trace("GameApp 收到来自事件分发器的退出请求。");
     is_running_ = false;
 }
 

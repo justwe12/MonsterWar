@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <functional>
-#include <entt/signal/fwd.hpp>  // 用于事件系统
+#include <entt/signal/fwd.hpp>
 
 // 前向声明, 减少头文件的依赖，增加编译速度
 struct SDL_Window;
@@ -45,10 +45,10 @@ private:
     bool is_running_ = false;
 
     /// @brief 游戏场景设置函数，用于在运行游戏前设置初始场景 (GameApp不再决定初始场景是什么)
-    std::function<void(engine::core::Context& )> scene_setup_func_;
+    std::function<void(engine::core::Context&)> scene_setup_func_;
 
     // 引擎组件
-    std::unique_ptr<entt::dispatcher> dispatcher_;  ///< @brief 事件分发器
+    std::unique_ptr<entt::dispatcher> dispatcher_;  // 事件分发器
     std::unique_ptr<engine::core::Time> time_;
     std::unique_ptr<engine::resource::ResourceManager> resource_manager_;
     std::unique_ptr<engine::render::Renderer> renderer_;
@@ -105,7 +105,7 @@ private:
     [[nodiscard]] bool initContext();
     [[nodiscard]] bool initSceneManager();
 
-    //事件处理函数
+    // 事件处理函数
     void onQuitEvent();
 };
 

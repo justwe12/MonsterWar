@@ -6,6 +6,7 @@
 #include "../resource/resource_manager.h"
 #include "../audio/audio_player.h"
 #include <spdlog/spdlog.h>
+#include <entt/signal/dispatcher.hpp>
 
 namespace engine::core {
 

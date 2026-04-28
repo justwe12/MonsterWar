@@ -1,19 +1,17 @@
 #include "input_manager.h"
 #include "../core/config.h"
+#include "../utils/events.h"
 #include <stdexcept>
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 #include <glm/vec2.hpp>
-#include "../utils/events.h"
 #include <entt/signal/dispatcher.hpp>
 
 
 namespace engine::input {
 
-InputManager::InputManager(SDL_Renderer* sdl_renderer, const engine::core::Config* config, entt::dispatcher *dispatcher): 
-sdl_renderer_(sdl_renderer) ,
-dispatcher_(dispatcher)
-{
+InputManager::InputManager(SDL_Renderer* sdl_renderer, const engine::core::Config* config, entt::dispatcher* dispatcher)
+    : sdl_renderer_(sdl_renderer), dispatcher_(dispatcher) {
     if (!sdl_renderer_) {
         spdlog::error("输入管理器: SDL_Renderer 为空指针");
         throw std::runtime_error("输入管理器: SDL_Renderer 为空指针");
@@ -26,19 +24,19 @@ dispatcher_(dispatcher)
     spdlog::trace("初始鼠标位置: ({}, {})", mouse_position_.x, mouse_position_.y);
 }
 
-// --- 更新和事件处理 ---
-
-entt::sink<entt::sigh<bool()>> InputManager::onAction(std::string_view action_name, ActionState state)
-{
-    return actions_to_function_[std::string(action_name)].at(static_cast<size_t>(state));
+entt::sink<entt::sigh<bool()>> InputManager::onAction(std::string_view action_name, ActionState action_state) {
+    // 如果action_name不存在，自动创建一个 std::array<...>
+    // .at() 会进行边界检查，更安全
+    return actions_to_func_[std::string(action_name)].at(static_cast<size_t>(action_state));
 }
 
-void InputManager::update()
-{
+// --- 更新和事件处理 ---
+
+void InputManager::update() {
     // 1. 根据上一帧的值更新默认的动作状态
-    for (auto& [action_name, state] : action_states_) {
+    for (auto& [action_name_id, state] : action_states_) {
         if (state == ActionState::PRESSED) {
-            state = ActionState::HOLD;                 // 当某个键按下不动时，并不会生成SDL_Event。
+            state = ActionState::HELD;                 // 当某个键按下不动时，并不会生成SDL_Event。
         } else if (state == ActionState::RELEASED) {
             state = ActionState::INACTIVE;
         }
@@ -50,24 +48,24 @@ void InputManager::update()
         processEvent(event);
     }
 
-    for (auto& [action_name, state] : action_states_) {
-        if (state != ActionState::INACTIVE) 
-        {
-            if (auto it = actions_to_function_.find(action_name); it != actions_to_function_.end()) 
-            {
-                //it->second.at(static_cast<size_t>(state)).publish();
-                it->second.at(static_cast<size_t>(state)).collect([](bool result){
-                    return result; // 只要有一个订阅者返回true, 就继续保持当前状态, 否则重置为INACTIVE
+    // 3. 触发回调
+    for (auto& [action_name_id, state] : action_states_) {
+        if (state != ActionState::INACTIVE) {   // 如果动作状态不是 INACTIVE，
+            // 且有绑定回调函数
+            if (auto it = actions_to_func_.find(action_name_id); it != actions_to_func_.end()) {
+                // collect方法可以获取回调函数返回值，放入lambda函数的参数中。
+                // 而lambda函数的返回值为真时，停止分发信号。
+                // 分发信号的顺序为“后绑定先调用”
+                it->second.at(static_cast<size_t>(state)).collect([](bool result) {
+                    return result;
                 });
             }
-            
         }
     }
 }
 
-void InputManager::quit()
-{
-    dispatcher_->trigger(engine::utils::QuitEvent{});
+void InputManager::quit() {
+    dispatcher_->trigger<engine::utils::QuitEvent>();
 }
 
 void InputManager::processEvent(const SDL_Event& event) {
@@ -99,7 +97,7 @@ void InputManager::processEvent(const SDL_Event& event) {
                     updateActionState(action_name, is_down, false); // 更新action状态
                 }
             }
-            // 在点击时更新鼠标位置
+            // 在点击时更新鼠标位置，同时更新逻辑位置
             mouse_position_ = {event.button.x, event.button.y};
             SDL_RenderCoordinatesFromWindow(sdl_renderer_, mouse_position_.x, mouse_position_.y, &logical_mouse_position_.x, &logical_mouse_position_.y);
             break;
@@ -121,7 +119,7 @@ void InputManager::processEvent(const SDL_Event& event) {
 bool InputManager::isActionDown(std::string_view action_name) const {
     // C++17 引入的 “带有初始化语句的 if 语句”
     if (auto it = action_states_.find(std::string(action_name)); it != action_states_.end()) {
-        return it->second == ActionState::PRESSED || it->second == ActionState::HOLD;
+        return it->second == ActionState::PRESSED || it->second == ActionState::HELD;
     }
     return false;
 }
@@ -147,6 +145,7 @@ glm::vec2 InputManager::getMousePosition() const
 
 glm::vec2 InputManager::getLogicalMousePosition() const
 {
+    // 每帧最多计算一次，避免每次调用时计算
     return logical_mouse_position_;
 }
 
@@ -158,21 +157,21 @@ void InputManager::initializeMappings(const engine::core::Config* config) {
         spdlog::error("输入管理器: Config 为空指针");
         throw std::runtime_error("输入管理器: Config 为空指针");
     }
-    actions_to_keyname_ = config->input_mappings_;      // 获取配置中的输入映射（动作 -> 按键名称）
+    auto actions_to_keyname = config->input_mappings_;      // 获取配置中的输入映射（动作 -> 按键名称）
     input_to_actions_.clear();
     action_states_.clear();
 
     // 如果配置中没有定义鼠标按钮动作(通常不需要配置),则添加默认映射, 用于 UI
-    if (actions_to_keyname_.find("mouse_left") == actions_to_keyname_.end()) {
-         spdlog::debug("配置中没有定义 'MouseLeftClick' 动作,添加默认映射到 'MouseLeft'.");
-         actions_to_keyname_["mouse_left"] = {"MouseLeft"};     // 如果缺失则添加默认映射
+    if (actions_to_keyname.find("mouse_left") == actions_to_keyname.end()) {
+         spdlog::debug("配置中没有定义 'mouse_left' 动作,添加默认映射到 'MouseLeft'.");
+         actions_to_keyname["mouse_left"] = {"MouseLeft"};     // 如果缺失则添加默认映射
     }
-     if (actions_to_keyname_.find("mouse_right") == actions_to_keyname_.end()) {
-         spdlog::debug("配置中没有定义 'MouseRightClick' 动作,添加默认映射到 'MouseRight'.");
-         actions_to_keyname_["mouse_right"] = {"MouseRight"};   // 如果缺失则添加默认映射
+     if (actions_to_keyname.find("mouse_right") == actions_to_keyname.end()) {
+         spdlog::debug("配置中没有定义 'mouse_right' 动作,添加默认映射到 'MouseRight'.");
+         actions_to_keyname["mouse_right"] = {"MouseRight"};   // 如果缺失则添加默认映射
     }
     // 遍历 动作 -> 按键名称 的映射
-    for (const auto& [action_name, key_names] : actions_to_keyname_) {
+    for (const auto& [action_name, key_names] : actions_to_keyname) {
         // 每个动作对应一个动作状态，初始化为 INACTIVE
         action_states_[action_name] = ActionState::INACTIVE;
         spdlog::trace("映射动作: {}", action_name);
@@ -223,7 +222,7 @@ void InputManager::updateActionState(std::string_view action_name, bool is_input
 
     if (is_input_active) { // 输入被激活 (按下)
         if (is_repeat_event) {
-            it->second = ActionState::HOLD; 
+            it->second = ActionState::HELD; 
         } else {            // 非重复的按下事件
             it->second = ActionState::PRESSED;
         }

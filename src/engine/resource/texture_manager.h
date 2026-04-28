@@ -1,10 +1,8 @@
 #pragma once
-#include <memory>       // 用于 std::unique_ptr
-#include <stdexcept>    // 用于 std::runtime_error
-#include <string>       // 用于 std::string
-#include <string_view> // 用于 std::string_view
-#include <unordered_map> // 用于 std::unordered_map
-#include <SDL3/SDL_render.h> // 用于 SDL_Texture 和 SDL_Renderer
+#include <memory>
+#include <unordered_map>
+#include <string_view>
+#include <SDL3/SDL_render.h>
 #include <glm/glm.hpp>
 #include <entt/core/fwd.hpp>
 
@@ -29,7 +27,7 @@ private:
         }
     };
 
-    // 存储文件路径和指向管理纹理的 unique_ptr 的映射。(容器的键不可使用std::string_view)
+    // 存储文件路径和指向管理纹理的 unique_ptr 的映射。(容器的键不可使用entt::hashed_string)
     std::unordered_map<entt::id_type, std::unique_ptr<SDL_Texture, SDLTextureDeleter>> textures_;
 
     SDL_Renderer* renderer_ = nullptr; // 指向主渲染器的非拥有指针
@@ -88,6 +86,7 @@ private: // 仅供 ResourceManager 访问的方法
      * @note 如果纹理未加载，则返回nullptr
      */
     SDL_Texture* getTexture(entt::hashed_string str_hs);
+
     /**
      * @brief 获取纹理的尺寸
      * @param id 纹理的唯一标识符, 通过entt::hashed_string生成
@@ -110,7 +109,11 @@ private: // 仅供 ResourceManager 访问的方法
      * @param id 纹理的唯一标识符, 通过entt::hashed_string生成
      */
     void unloadTexture(entt::id_type id);
-    void clearTextures();                                        ///< @brief 清空所有纹理资源
+
+    /**
+     * @brief 清空所有纹理资源
+     */
+    void clearTextures();
 };
 
 } // namespace engine::resource

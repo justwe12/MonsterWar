@@ -2,15 +2,15 @@
 #include "texture_manager.h"
 #include "audio_manager.h"
 #include "font_manager.h" 
+#include <fstream>
+#include <filesystem>
 #include <SDL3_mixer/SDL_mixer.h>
 #include <SDL3_ttf/SDL_ttf.h> 
 #include <glm/glm.hpp>
 #include <spdlog/spdlog.h>
-#include <entt/core/hashed_string.hpp>
 #include <nlohmann/json.hpp>
-#include <fstream>
-#include <filesystem>
-
+#include <entt/core/hashed_string.hpp>
+ 
 namespace engine::resource {
 
 ResourceManager::~ResourceManager() = default;
@@ -28,7 +28,6 @@ ResourceManager::ResourceManager(SDL_Renderer* renderer) {
 void ResourceManager::clear() {
     font_manager_->clearFonts();
     audio_manager_->clearSounds();
-    audio_manager_->clearMusic();
     texture_manager_->clearTextures();
     spdlog::trace("ResourceManager 中的资源通过 clear() 清空。");
 }
@@ -68,7 +67,6 @@ void ResourceManager::loadResources(std::string_view file_path) {
     }
 }
 
-// --- 纹理接口实现 ---
 // --- 纹理接口实现 ---
 SDL_Texture* ResourceManager::loadTexture(entt::id_type id, std::string_view file_path) {
     // 构造函数已经确保了 texture_manager_ 不为空，因此不需要再进行if检查，以免性能浪费

@@ -1,9 +1,9 @@
 #pragma once
 #include <memory> // 用于 std::unique_ptr
-#include <string> // 用于 std::string
 #include <string_view> // 用于 std::string_view
 #include <glm/glm.hpp>
 #include <entt/core/fwd.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 // 前向声明 SDL 类型
 struct SDL_Renderer;
@@ -83,7 +83,7 @@ public:
     TTF_Font* getFont(entt::id_type id, int point_size, std::string_view file_path = ""); ///< @brief 尝试获取已加载字体的指针，如果未加载则尝试加载(通过id + 文件路径)
     TTF_Font* getFont(entt::hashed_string str_hs, int point_size);                        ///< @brief 尝试获取已加载字体的指针，如果未加载则尝试加载(通过字符串哈希值)
     void unloadFont(entt::id_type id, int point_size);                              ///< @brief 卸载指定的字体资源
-    void clearFonts();                                                  ///< @brief 清空所有字体资源
+    void clearFonts();                                                              ///< @brief 清空所有字体资源
 };
 
 } // namespace engine::resource

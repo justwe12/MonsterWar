@@ -1,7 +1,5 @@
 #pragma once
-
-#include <entt/signal/fwd.hpp>  // 用于事件系统
-
+#include <entt/signal/fwd.hpp>
 // 前置声明核心系统
 namespace engine::input {
     class InputManager;
@@ -43,11 +41,14 @@ private:
 public:
     /**
      * @brief 构造函数。
-     * @param dispatcher 对 事件分发器 实例的引用。
+     * @param dispatcher 对事件分发器的引用。
      * @param input_manager 对 InputManager 实例的引用。
      * @param renderer 对 Renderer 实例的引用。
      * @param camera 对 Camera 实例的引用。
+     * @param text_renderer 对 TextRenderer 实例的引用。
      * @param resource_manager 对 ResourceManager 实例的引用。
+     * @param audio_player 对 AudioPlayer 实例的引用。
+     * @param game_state 对 GameState 实例的引用。
      */
     Context(entt::dispatcher& dispatcher,
             engine::input::InputManager& input_manager,
