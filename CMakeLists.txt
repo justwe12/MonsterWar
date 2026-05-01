@@ -61,13 +61,15 @@ set(SOURCES
     src/engine/render/camera.cpp
     src/engine/render/text_renderer.cpp
     src/engine/input/input_manager.cpp
+    src/engine/loader/level_loader.cpp
+    src/engine/loader/basic_entity_builder.cpp
     #src/engine/object/game_object.cpp
     src/engine/scene/scene.cpp
     src/engine/scene/scene_manager.cpp
-    #src/engine/scene/level_loader.cpp
     src/engine/system/animation_system.cpp
     src/engine/system/render_system.cpp
     src/engine/system/movement_system.cpp
+    src/engine/system/ysort_system.cpp
     src/engine/ui/ui_manager.cpp
     src/engine/ui/ui_element.cpp
     src/engine/ui/ui_interactive.cpp
