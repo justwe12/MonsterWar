@@ -8,6 +8,11 @@
 #include <unordered_map>
 #include <vector>
 
+namespace game::factory {
+    class EntityFactory;
+    class BlueprintManager;
+}
+
 namespace game::scene {
 
 class GameScene final: public engine::scene::Scene {
@@ -20,8 +25,13 @@ private:
     std::unique_ptr<game::system::FollowPathSystem> follow_path_system_;
     std::unique_ptr<game::system::RemoveDeadSystem> remove_dead_system_;
 
-    std::unordered_map<int, game::data::WaypointNode> waypoint_nodes_;  // 路径节点ID到节点数据的映射
-    std::vector<int> start_points_;                                     // 起点ID列表
+    std::unordered_map<int, game::data::WaypointNode> waypoint_nodes_;  // 璺緞鑺傜偣ID鍒拌妭鐐规暟鎹殑鏄犲皠
+    std::vector<int> start_points_;                                     // 璧风偣ID鍒楄〃
+
+    std::unique_ptr<game::factory::EntityFactory> entity_factory_;      // 瀹炰綋宸ュ巶锛岃礋璐ｅ垱寤哄拰绠＄悊瀹炰綋
+
+    // 绠＄悊鏁版嵁鐨勫疄渚嬪緢鍙兘鍚屾椂琚涓満鏅娇鐢紝鍥犳浣跨敤鍏变韩鎸囬拡
+    std::shared_ptr<game::factory::BlueprintManager> blueprint_manager_;// 钃濆浘绠＄悊鍣紝璐熻矗绠＄悊钃濆浘鏁版嵁
     
 public:
     GameScene(engine::core::Context& context);
@@ -35,11 +45,12 @@ public:
 private:
     [[nodiscard]] bool loadLevel();
     [[nodiscard]] bool initEventConnections();
+    [[nodiscard]] bool initEntityFactory();
 
-    // 事件回调函数
+    // 浜嬩欢鍥炶皟鍑芥暟
     void onEnemyArriveHome(const game::defs::EnemyArriveHomeEvent& event);
 
-    // 测试函数
+    // 娴嬭瘯鍑芥暟
     void createTestEnemy();
 
 };
