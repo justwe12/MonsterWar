@@ -80,6 +80,7 @@ set(SOURCES
     src/engine/ui/state/ui_normal_state.cpp
     src/engine/ui/state/ui_pressed_state.cpp
     src/engine/ui/state/ui_hover_state.cpp
+    src/engine/system/audio_system.cpp
     src/game/factory/blueprint_manager.cpp
     src/game/factory/entity_factory.cpp
     src/game/loader/entity_builder_mw.cpp
@@ -92,6 +93,8 @@ set(SOURCES
     src/game/system/orientation_system.cpp
     src/game/system/set_target_system.cpp
     src/game/system/animation_state_system.cpp
+    src/game/system/animation_event_system.cpp
+    src/game/system/combat_resolve_system.cpp
 )
 
 #添加ImGui
