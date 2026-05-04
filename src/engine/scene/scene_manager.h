@@ -43,14 +43,13 @@ public:
     // 核心循环函数
     void update(float delta_time);
     void render();
-    void handleInput();
     void close();
 
 private:
-    //事件回调函数
-    void onPopScene();                                        ///< @brief 处理 PopSceneEvent 事件的回调函数。
-    void onPushScene(engine::utils::PushSceneEvent& event);   ///< @brief 处理 PushSceneEvent 事件的回调函数。
-    void onReplaceScene(engine::utils::ReplaceSceneEvent& event); ///< @brief 处理 ReplaceSceneEvent 事件的回调函数。
+    // 事件回调函数
+    void onPopScene();
+    void onPushScene(engine::utils::PushSceneEvent& event);
+    void onReplaceScene(engine::utils::ReplaceSceneEvent& event);
 
     void processPendingActions();                           ///< @brief 处理挂起的场景操作（每轮更新最后调用）。
     // 直接切换场景
