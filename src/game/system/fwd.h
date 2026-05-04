@@ -18,5 +18,7 @@ class HealthBarSystem;
 class GameRuleSystem;
 class PlaceUnitSystem;
 class RenderRangeSystem;
+class DebugUISystem;
+class SelectionSystem;
 
 }   // namespace game::system
